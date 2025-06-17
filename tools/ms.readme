@@ -1,0 +1,14 @@
+###### input format #####
+cat_id|good_id|vector_data
+
+123|45678|0.1,0.2...
+
+#split input data into .flat and .ivf
+./bin/lve_ms_split_data -data /data0/jiazi/ms_data/2019-04-28/b.dat -thd 100000
+
+#build CatFlatBuilder
+./bin/local_builder -dimension 128 -method IP  -build_input /data0/jiazi/ms_data/2019-04-28/b.dat.flat -builder_class CatFlatBuilder -threads 1 -input_file_type cat_txt -input_first_sep '|'
+
+#build CatIVFFlatBuilder: assume generated cluster files lies in current dir
+./bin/centroid_trainer -dimension 128 -method IP -rough_centroid_num 4096 -train_input /data0/jiazi/ms_data/2019-04-28/b.dat.ivf -input_first_sep '|' -input_file_type cat_txt
+./bin/local_builder -dimension 128 -method IP  -build_input /data0/jiazi/ms_data/2019-04-28/b.dat.ivf  -builder_class CatIVFFlatBuilder -input_file_type cat_txt -input_first_sep '|'

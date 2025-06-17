@@ -1,0 +1,18 @@
+# 定义本项目的名称和版本
+module(
+    name = "monoceros"
+)
+
+bazel_dep(name = "googletest", version = "1.14.0", repo_name = "com_google_gtest")
+bazel_dep(name = "brpc-red", version = "2.4.6-cx-test", repo_name = "brpc")
+bazel_dep(name = "search_common", version = "0.0.1-bzlmod")
+bazel_dep(name = "google_leveldb", version = "1.20", repo_name = "com_github_google_leveldb")
+bazel_dep(name = "cat_client", version = "0.1.1")
+bazel_dep(name = "abseil-cpp", version = "20230802.0", repo_name = "com_google_absl")
+bazel_dep(name = "neutron_lib", version = "1.2.0")
+bazel_dep(name = "boost", version = "0.1.0", repo_name = "com_github_nelhage_rules_boost")
+
+
+bazel_dep(name = "rules_java", version = "7.0.6")
+java_toolchains = use_extension("@rules_java//java:extensions.bzl", "toolchains")
+use_repo(java_toolchains, "local_jdk")

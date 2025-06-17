@@ -1,0 +1,60 @@
+#include "ivf_pq_builder.h"
+#include "../query_info.h"
+
+MERCURY_NAMESPACE_BEGIN(core);
+
+//! Initialize Builder
+int IvfPqBuilder::Init(IndexParams &params) {
+    if (!index_) {
+        index_.reset(new IvfPqIndex());
+    }
+    LOG_INFO("Begin to Init ivf pq builder");
+    if (index_->Create(params) != 0) {
+        LOG_ERROR("Failed to init ivf pq index.");
+        return -1;
+    }
+    LOG_INFO("End init ivf pq builder");
+
+    return 0;
+}
+
+//! Build the index
+int IvfPqBuilder::AddDoc(docid_t doc_id, uint64_t pk,
+                         const std::string& build_str, 
+                         const std::string& primary_key) {
+    return index_->Add(doc_id, pk, build_str);
+}
+
+int IvfPqBuilder::GetRankScore(const std::string& build_str, float * score) {
+    QueryInfo query_info(build_str);
+    if (!query_info.MakeAsBuilder()) {
+        LOG_ERROR("resolve query failed. query str:%s", query_info.GetRawQuery().c_str());
+        return -1;
+    }
+
+    SlotIndex slot_index = index_->GetNearestLabel(query_info.GetVector(), query_info.GetVectorLen());
+    if (slot_index == INVALID_SLOT_INDEX) {
+        return -1;
+    }
+    *score = (float)(slot_index);
+    return 0;
+}
+
+//! Dump index into file or memory
+int IvfPqBuilder::DumpIndex(const std::string &path, const IndexStorage::Pointer &stg) {
+    //TODO
+    return 0;
+}
+
+const void * IvfPqBuilder::DumpIndex(size_t* size) {
+    const void *data = nullptr;
+    if (index_->Dump(data, *size) != 0) {
+        LOG_ERROR("Failed to dump index.");
+        *size = 0;
+        return nullptr;
+    }
+
+    return data;
+}
+
+MERCURY_NAMESPACE_END(core);

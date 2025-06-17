@@ -1,0 +1,1 @@
+coscli cp cos://lucky/haiming/diskann/vamana/datasets/img_shoe_1m.base img_shoe_1m.base

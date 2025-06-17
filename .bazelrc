@@ -1,0 +1,46 @@
+
+# Find explanation at https://docs.bazel.build/versions/master/guide.html#bazelrc
+
+startup --output_base=./bazel-cache --noblock_for_lock
+# startup --host_jvm_debug
+common --enable_bzlmod
+
+# build --subcommands --show_result 1000000
+# build --remote_http_cache=http://sedev10st.prod.yiran.com:38000/cache --experimental_guard_against_concurrent_changes
+build --profile=./bazel-cache/bazel.profile
+build:debug --explain=./bazel-cache/bazel.explain --verbose_explanations
+build --show_loading_progress --show_timestamps
+build --verbose_failures --compilation_mode=dbg
+#build --workspace_status_command=./bazel/workspace_status
+build:release --stamp
+
+# DO NOT enable tcmalloc when using valgrind which would produce many false errors.
+# build --define=with_tcmalloc=false --define=leo=default
+build --copt=-DHAVE_ZLIB=1 --copt=-DUSING_BAZEL --copt=-DPSW_APP_LINK_STATIC
+build --copt=-Wall --copt=-march=native
+build --copt=-std=c++14 --copt=-fPIC
+build --copt=-mavx2
+
+# WAR for psw
+build --copt=-Wno-deprecated --cxxopt=-faligned-new --copt=-Wno-unused-variable
+build --linkopt=-latomic
+
+build --linkopt -fuse-ld=gold
+build --cxxopt="-std=c++17" --cxxopt="-Wno-register"
+
+# builtin memcmp is much slower than glibc before gcc4.9.5
+# checkout https://gcc.gnu.org/bugzilla/show_bug.cgi?id=43052
+build --copt=-fno-builtin-memcmp
+build:debug --copt=-DDEBUG --copt=-O1  --copt=-g3
+build:release --copt=-O3 --copt=-DNDEBUG
+
+build:half --copt=-mf16c
+
+#test --test_env LD_PRELOAD='/usr/local/lib/libtcmalloc.so' --test_env HEAPCHECK='normal'
+test --test_output=errors
+
+#local
+build:release --spawn_strategy=local
+build:release --genrule_strategy=local
+build:release --local_cpu_resources=HOST_CPUS*.5
+

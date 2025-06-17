@@ -1,0 +1,6 @@
+### 拉数据
+1. cd data
+2. wget http://ann-benchmarks.com/sift-128-euclidean.hdf5 
+3. hdfs dfs -get hdfs://huaguoshan-tx/data/test/anduo/dssmtopk-64-innerproduct.hdf5
+3. python3 h5file.py (需要改一下脚本)
+4. 逗号替换成空格，每个文件第一行删掉

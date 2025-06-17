@@ -1,0 +1,27 @@
+stages:
+  - build
+  - test
+
+build_job:
+  stage: build
+  image: docker-reg.devops.xiaohongshu.com/base/lucky-dev:test.lve.diskann-test-v0
+  tags:
+    - docker
+  script:
+    - /opt/rh/devtoolset-8/enable
+    - scl enable devtoolset-8 "bazel build --config=release //src/engine/redindex:RedIndex"
+
+test_job:
+  stage: test
+  image: docker-reg.devops.xiaohongshu.com/base/lucky-dev:test.lve.diskann-test-v0
+  tags:
+    - docker
+  script:
+    - /opt/rh/devtoolset-8/enable
+    - scl enable devtoolset-8 "bazel test --config=release --test_timeout=600 //tests/engine/redindex:all_test"
+    - scl enable devtoolset-8 "bazel test --config=release --test_timeout=600 //tests/core:all_test"
+  artifacts:
+    paths:
+      - bazel-cache/execroot/mercury/bazel-out/k8-dbg/testlogs
+    expire_in: 3 days
+    when: on_failure

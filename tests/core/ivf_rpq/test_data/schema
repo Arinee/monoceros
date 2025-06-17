@@ -1,0 +1,7 @@
+"DataType":"float",
+"Method":"L2",
+"Dimension": "256",
+"IndexType": "IvfFlat",
+"IvfCentroidData":"direct data...",
+"IvfCoarseScanRatio":"0.5",
+"IvfPQScanNum":"2000",

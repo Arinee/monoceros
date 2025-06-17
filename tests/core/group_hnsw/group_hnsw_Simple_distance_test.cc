@@ -1,0 +1,111 @@
+/// Copyright (c) 2019, xiaohongshu Inc. All rights reserved.
+/// Author: kailuo <kailuo@xiaohongshu.com>
+/// Created: 2019-12-17 00:59
+
+#include <gtest/gtest.h>
+#include <iostream>
+#include <fstream>
+
+#define protected public
+#define private public
+#include "src/core/algorithm/group_hnsw/group_hnsw_builder.h"
+#include "src/core/algorithm/group_hnsw/group_hnsw_searcher.h"
+#include "src/core/algorithm/algorithm_factory.h"
+#include "src/core/algorithm/query_info.h"
+#include "src/core/framework/index_storage.h"
+#include "src/core/framework/instance_factory.h"
+#undef protected
+#undef private
+
+MERCURY_NAMESPACE_BEGIN(core);
+
+class GroupHnswSimpleTest: public testing::Test
+{
+public:
+    void SetUp()
+    {
+        index_params_.set(PARAM_DATA_TYPE, "float");
+        index_params_.set(PARAM_METHOD, "IP");
+        index_params_.set(PARAM_DIMENSION, 128);
+        index_params_.set(PARAM_CUSTOM_DISTANCE_METHOD, "Simple");
+        index_params_.set(PARAM_GROUP_HNSW_BUILD_THRESHOLD, 1000);
+        index_params_.set(PARAM_HNSW_BUILDER_MAX_LEVEL, 10);
+        index_params_.set(PARAM_HNSW_BUILDER_SCALING_FACTOR, 30);
+        index_params_.set(PARAM_HNSW_BUILDER_UPPER_NEIGHBOR_CNT, 20);
+        index_params_.set(PARAM_GENERAL_MAX_BUILD_NUM, 100);
+        index_params_.set(PARAM_GRAPH_COMMON_SEARCH_STEP, 10);
+        index_params_.set(PARAM_HNSW_BUILDER_EFCONSTRUCTION, 400);
+        index_params_.set(PARAM_GRAPH_COMMON_MAX_SCAN_NUM, 10000);
+        index_params_.set(PARAM_INDEX_TYPE, "GroupHnsw");
+        index_params_.set(PARAM_GENERAL_CONTAIN_FEATURE_PROFILE, true);
+
+        factory_.SetIndexParams(index_params_);
+    }
+
+    void TearDown()
+    {
+    }
+
+    AlgorithmFactory factory_;
+    IndexParams index_params_;
+};
+
+TEST_F(GroupHnswSimpleTest, TestInit) {
+    char *buffer;
+    //也可以将buffer作为输出参数
+    buffer = getcwd(NULL, 0);
+    std::cout << "cwd is:" << buffer << std::endl;
+
+    Builder::Pointer builder_p = factory_.CreateBuilder();
+    mercury::core::GroupHnswBuilder* builder = dynamic_cast<mercury::core::GroupHnswBuilder*>(builder_p.get());
+    ASSERT_TRUE(builder != nullptr);
+
+    std::string data_str = "-0.102875 -0.047437 0.016824 -0.032322 -0.018978 0.00603 0.004624 -0.042992 0.043804 -0.129003 -0.063305 -0.018899 0.047719 0.03726 -0.012384 0.024918 0.063164 0.003078 -0.054183 -0.118877 -0.054619 0.11011 0.096558 0.018475 -0.087097 0.026629 -0.08566 0.02428 -0.088073 -0.046569 -0.094956 -0.027088 0.034621 -0.106306 -0.008979 0.031298 0.030987 0.123223 -0.004162 -0.04761 -0.037318 0.039261 0.136555 0.019844 -0.042915 0.100461 -0.061183 0.028209 -0.084324 0.012819 0.028181 -0.08822 0.035264 -0.072143 -0.015044 0.111965 -0.031478 0.068231 -0.018672 0.001338 0.046578 0.067762 -0.057287 -0.047343 -0.005129 0.161173 -0.021491 -0.003186 0.015636 0.006977 0.003917 -0.031233 0.024885 0.071695 -0.05812 -0.099307 -0.061015 0.031348 0.074765 -0.005988 -0.036811 0.062878 -0.117832 -0.013208 0.037202 0.017278 0.132848 -0.028692 0.107519 0.04048 -0.07074 -0.038141 -0.116665 -0.049325 0.138709 0.02446 -0.006483 0.097473 0.019068 -0.030756 0.003464 -0.004049 -0.017734 -0.049131 0.011849 -0.087313 0.018132 0.093301 0.02402 -0.114743 -0.073973 0.022781 -0.003511 0.043055 0.069776 -0.050155 -0.018691 0.078315 -0.016702 0.042535 -0.088182 -0.055301 0.038858 0.051842 0.048028 -0.044823 -0.051279 -0.016467";
+    std::string group_str = "1:11;2:200||" + data_str;
+    int ret_code = builder->AddDoc(0, 0, group_str);
+    ASSERT_EQ(ret_code, 0);
+    ret_code = builder->AddDoc(1, 0, group_str);
+    ASSERT_EQ(ret_code, 0);
+    ret_code = builder->AddDoc(2, 0, group_str);
+    ASSERT_EQ(ret_code, 0);
+    ret_code = builder->AddDoc(3, 0, group_str);
+    ASSERT_EQ(ret_code, 0);
+    ret_code = builder->AddDoc(4, 0, group_str);
+    ASSERT_EQ(ret_code, 0);
+    ret_code = builder->AddDoc(5, 0, group_str);
+    ASSERT_EQ(ret_code, 0);
+    ret_code = builder->AddDoc(6, 0, group_str);
+    ASSERT_EQ(ret_code, 0);
+    ret_code = builder->AddDoc(7, 0, group_str);
+    ASSERT_EQ(ret_code, 0);
+
+    const void *dump_content = nullptr;
+    size_t dump_size = 0;
+    dump_content = builder->DumpIndex(&dump_size);
+    ASSERT_TRUE(dump_content != nullptr);
+
+    std::cout << "dump_size: " << dump_size << std::endl;
+
+    Searcher::Pointer index_searcher = factory_.CreateSearcher();
+    mercury::core::GroupHnswSearcher* searcher = dynamic_cast<mercury::core::GroupHnswSearcher *> (index_searcher.get());
+    ASSERT_TRUE(searcher != nullptr);
+
+    ret_code = searcher->LoadIndex(dump_content, dump_size);
+    ASSERT_EQ(ret_code, 0);
+
+    IndexParams index_params;
+    mercury::core::GeneralSearchContext context(index_params);
+
+    // query dimension == doc dimension
+    std::string search_str = "6&1:11#3;2:200#3||0.037105188 -0.09963768 0.112405114 -0.09919526 -0.16488822 0.05997022 -0.07301077 -0.03831501 -0.09299047 0.08260672 -0.09259026 0.006538624 -0.12414588 -0.10387742 -0.07497343 -0.09863809 0.024261214 0.0544381 -0.056869343 0.05104494 0.046774007 -0.0647179 0.00081528147 -0.04286386 -0.016324522 0.05661807 -0.2033659 -0.044357743 -0.09281927 0.0997845 -0.14933874 -0.008094892 -0.11624634 -0.14089273 -0.10945671 0.055918273 0.09396473 -0.08005455 0.084400766 0.021296086 0.0609102 0.046105556 0.029863087 -0.099661954 -0.053571478 -0.017541459 0.12246048 -0.14319223 0.0168707 0.14629889 -0.04741165 0.05754831 -0.029780127 0.024464356 0.101223454 -0.09036789 -0.015348834 -0.11011469 -0.12878184 0.11340711 0.09643751 0.08178696 0.10965163 0.06346747 0.043291084 0.108630866 0.116031766 -0.0697338 0.031178674 0.073483236 -0.04411992 0.10767264 0.047490753 -0.09134567 -0.07483047 -0.17655163 0.13136609 0.09006917 0.13187997 -0.12964027 0.09153519 -0.01721974 0.0046212524 0.14212918 0.055485837 -0.19900955 -0.057212397 -0.07277228 -0.016863713 0.053140633 -0.034304697 -0.1115871 -0.15025508 0.18265297 0.110716335 0.03237194 0.007220623 -0.08377357 0.11972804 -0.07653724 0.12246349 -0.086648464 0.12819062 -0.08388696 -0.089263484 0.053282235 0.17635006 -0.0020986022 0.110868335 -0.016155364 -0.11890439 0.10561465 -0.11130717 0.083681956 -0.088963106 0.068944745 0.22988935 0.29236725 -0.078875355 0.46416578 5.1698185e-06 9.277926e-06 4.022857e-05 1.0294868e-05 -4.4157837e-06 -0.0008374268 0.00049100793 0.0004504403";
+    QueryInfo query_info(search_str);
+    ASSERT_TRUE(query_info.MakeAsSearcher());
+    ret_code = searcher->Search(query_info, &context);
+    ASSERT_EQ(ret_code, 0);
+
+    std::cout << context.Result().size() << std::endl;
+
+    ASSERT_TRUE(true);
+}
+
+MERCURY_NAMESPACE_END(core);
